@@ -16,10 +16,11 @@ using std::endl;
 using std::regex;
 using std::regex_match;
 
-#define MAX_BUF_SIZE 1024	//Apache default, might as well use it here
+#define MAX_BUF_SIZE 8192	//Apache default, might as well use it here
 #define HTTP_GET   	"GET /%s HTTP/1.1\r\n" \
 					"Host: %s\r\n" \
 					"Accept: */*\r\n" \
+					"Connection: close\r\n" \
 					"\r\n"
 
 sockaddr_in resolveHost(char* hostname);
@@ -38,6 +39,13 @@ int main(int argc, char* argv[]){
 		abort()
 				;
 	}
+	if (strstr(args.inputs[0], "http://") != nullptr) {
+		args.inputs[0] += strlen("http://");
+		if (args.verbose_given){
+			cout << "Eliminating the http:// from your url... why did you put that there anyways?" << endl;
+			cout << "New URL: " << args.inputs[0] << endl;
+		}
+	}
 	char* host = strtok(args.inputs[0], "/");
 	char* path = strtok(nullptr, "/"); //stateful library functions give me the creeps
 	if (path == nullptr){
@@ -47,7 +55,7 @@ int main(int argc, char* argv[]){
 	uint16_t port = (uint16_t)atoi(args.inputs[1]);
 
 	if (args.verbose_given){
-		cout << "Getting file " << path << " from host " << host << ":" << port << endl;
+		cout << "Getting file /" << path << " from host " << host << ":" << port << endl;
 	}
 
 	int netsocket;
@@ -69,10 +77,11 @@ int main(int argc, char* argv[]){
 	else if (args.verbose_given){
 		cout << "Successfully connected to server\n" << endl;
 	}
-	cout << "Sending request:\n" << HTTP_GET << endl;
+	printf("Sending request:\n");
+	printf(HTTP_GET, path, host);
 	dprintf(netsocket, HTTP_GET, path, host);
 
-	char buf[8192] = {'\0'}; //Apache default is 8k, so let's do it here too
+	char buf[8192] = {'\0'};
 	if (read(netsocket, buf, MAX_BUF_SIZE) == -1){
 		perror("Failed to read from socket");
 		abort();
@@ -86,31 +95,34 @@ int main(int argc, char* argv[]){
 	 * Curse you forever, regexcomp(). If only the CCC machines had Boost installed...
 	 */
 
+	int contentLength = 0;
 	char tempBuf[MAX_BUF_SIZE];
-	char* lengthStr = strcpy(tempBuf, strstr(buf, "Content-Length: ")); //because strtok eats strings...
-	lengthStr += strlen("Content-Length: ");
-	const int contentLength = atoi(strtok(lengthStr, "\r\n"));
+	if (strstr(buf, "Content-Length: ") != nullptr) {
+		char *lengthStr = strcpy(tempBuf, strstr(buf, "Content-Length: ")); //because strtok eats strings...
+		lengthStr += strlen("Content-Length: ");
+		contentLength = atoi(strtok(lengthStr, "\r\n"));
+	}
 	if (args.verbose_given)
 		cout << "Content length: " << contentLength << endl;
 	int printedBytes = printf(strstr(buf, "\r\n\r\n") + 4);
 
-	while (printedBytes < contentLength){
+	while (!contentLength || printedBytes < contentLength){
 		memset(buf, 0, MAX_BUF_SIZE);
-		int st = (int)read(netsocket, buf, MAX_BUF_SIZE);
+		ssize_t st = read(netsocket, buf, MAX_BUF_SIZE);
 		if (st > 0){
 			printf(buf);
 			fflush(stdout);
 			printedBytes += st;
 		}
-		else if (st < 0){
-			perror("Something happened");
-		}
 		else
 			break;
+
+		//If we didn't read as much info as could fit into the buffer last time, check if the connection is still open.
+		//This is done by writing to the socket and seeing what happens. This feels wrong.
 	}
 
 	if (args.verbose_given)
-		cout << "\n\nPrinted " << printedBytes << "/" << contentLength << "bytes " << endl;
+		cout << "\n\nPrinted " << printedBytes << "/" << contentLength << " bytes" << endl;
 
 	close(netsocket);
 }
