@@ -29,9 +29,15 @@ int main(int argc, char* argv[]){
 	//array containing them. We need a URL first and a number second, so verify that we have them both.
 
 
-	if (args.inputs_num != 2){
+	char* host;
+	char* path;
+	uint16_t port = 80;
+	if (args.inputs_num == 0 | args.inputs_num > 2){
 		cerr << "Incorrect number of arguments specified, please provide a URL and a port." << endl;
 		exit(1);
+	}
+	else if (args.inputs_num == 1){
+		cerr << "No port provided, assuming port 80" << endl;
 	}
 	if (strstr(args.inputs[0], "http://") != nullptr) {
 		args.inputs[0] += strlen("http://");
@@ -40,20 +46,21 @@ int main(int argc, char* argv[]){
 			cout << "New URL: " << args.inputs[0] << endl;
 		}
 	}
-	char* host = strtok(args.inputs[0], "/");
-	char* path = strtok(nullptr, "/"); //stateful library functions give me the creeps
+	host = strtok(args.inputs[0], "/");
+	path = strtok(nullptr, "/"); //stateful library functions give me the creeps
 	if (path == nullptr){
 		path = (char*)malloc(1);
 		strcpy(path, "\0");
 	}
-	uint16_t port = (uint16_t)atoi(args.inputs[1]);
+	if (args.inputs_num == 2)
+		port = (uint16_t)atoi(args.inputs[1]);
 
 	if (args.verbose_given){
 		cout << "Getting file /" << path << " from host " << host << ":" << port << endl;
 	}
 
-	int netsocket;
-	if ((netsocket = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+	int netsocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (netsocket < 0){
 		perror("Failed to open socket");
 		exit(1);
 	}
@@ -171,7 +178,7 @@ int main(int argc, char* argv[]){
 }
 
 sockaddr_in resolveHost(char* hostname){
-	//Resolve URL using magic
+	//Resolve URL using simple getaddrinfo method
 	addrinfo hints;
 	addrinfo* result;
 	memset(&hints, 0, sizeof(addrinfo));
@@ -179,13 +186,14 @@ sockaddr_in resolveHost(char* hostname){
 	hints.ai_socktype = SOCK_STREAM;
 
 	if (getaddrinfo(hostname, NULL, &hints, &result) != 0){
-		perror("Failed to resolve host");
+		perror("Failed to resolve host, either your URL is wrong, or");
 		exit(1);
 	}
 
-	sockaddr_in addr;
-	if (result != nullptr)
-		addr = *(sockaddr_in*)result->ai_addr;
+	//getaddrinfo actually returns a linked list (each addrinfo struct has a pointer to another addrinfo struct),
+	//but we don't actually care about those other results here. Just extract a sockaddr_in struct from the first addr
+	//in the chain, then free the memory occupied by it.
+	sockaddr_in addr = *(sockaddr_in*)result->ai_addr;
 	freeaddrinfo(result);
 	return addr;
 }
