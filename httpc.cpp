@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
 
 	if (args.inputs_num != 2){
 		cerr << "Incorrect number of arguments specified, please provide a URL and a port." << endl;
-		abort();
+		exit(1);
 	}
 	if (strstr(args.inputs[0], "http://") != nullptr) {
 		args.inputs[0] += strlen("http://");
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
 	int netsocket;
 	if ((netsocket = socket(AF_INET, SOCK_STREAM, 0)) < 0){
 		perror("Failed to open socket");
-		abort();
+		exit(1);
 	}
 
 	sockaddr_in serverAddr = resolveHost(args.inputs[0]);
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
 
 	if (connect(netsocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) != 0){
 		perror("Failed to connect to server");
-		abort();
+		exit(1);
 	}
 	else if (args.verbose_given) {
 		cout << "Successfully connected to server\n" << endl;
@@ -127,7 +127,7 @@ int main(int argc, char* argv[]){
 	char buf[8192] = {'\0'};
 	if (read(netsocket, buf, MAX_BUF_SIZE) == -1){
 		perror("Failed to read from socket");
-		abort();
+		exit(1);
 
 	}
 
@@ -180,7 +180,7 @@ sockaddr_in resolveHost(char* hostname){
 
 	if (getaddrinfo(hostname, NULL, &hints, &result) != 0){
 		perror("Failed to resolve host");
-		abort();
+		exit(1);
 	}
 
 	sockaddr_in addr;
