@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.9)
-project(Project_1___HTTPd)
+project(HTTP-Suite)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES
-        cmdline.c
-        cmdline.h
-        httpc.cpp
-        Makefile
-        options.ggo)
+set(HTTPC_SOURCE_FILES
+        httpc/cmdline.c
+        httpc/cmdline.h
+        httpc/httpc.cpp)
+set(HTTPD_SOURCE_FILES
+        httpd/httpd.cpp)
 
-add_executable(Project_1___HTTPd ${SOURCE_FILES})
+add_executable(httpc ${HTTPC_SOURCE_FILES})
+add_executable(httpd ${HTTPD_SOURCE_FILES})
