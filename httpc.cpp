@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <sys/time.h>
 #include "cmdline.h"
 using std::cout;
 using std::cerr;
@@ -30,8 +31,7 @@ int main(int argc, char* argv[]){
 
 	if (args.inputs_num != 2){
 		cerr << "Incorrect number of arguments specified, please provide a URL and a port." << endl;
-		abort()
-				;
+		abort();
 	}
 	if (strstr(args.inputs[0], "http://") != nullptr) {
 		args.inputs[0] += strlen("http://");
@@ -120,15 +120,24 @@ int main(int argc, char* argv[]){
 		 * honestly, I'm too afraid to touch them. It took way too long to find and fix the first time through.
 		 */
 	}
+	timeval startTime;
+	gettimeofday(&startTime, nullptr);
 	dprintf(netsocket, HTTP_GET, path, host);
-
-
 
 	char buf[8192] = {'\0'};
 	if (read(netsocket, buf, MAX_BUF_SIZE) == -1){
 		perror("Failed to read from socket");
 		abort();
 
+	}
+
+	//Since the server has now responded (otherwise read() would've blocked), we can call that time the RTT. Print it
+	//if need be.
+	if (args.print_rtt_given){
+		timeval endTime;
+		gettimeofday(&endTime, nullptr);
+		int ms = ((endTime.tv_sec - startTime.tv_sec) * 1000) + ((endTime.tv_usec - startTime.tv_usec) / 1000);
+		cerr << "RTT: " << ms << "ms" << endl; //Makes it easier to filter out data
 	}
 
 	//Extract the content length from the response, if there is one.
