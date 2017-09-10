@@ -61,7 +61,7 @@ void HTTPResponder::respond() {
 		if (verbose){
 			cout << "Got a " << clientHeader.method() << " from a client, something about ";
 			cout << clientHeader.filename() << endl;
-			cout << (clientHeader.connection() ? "Keeping " : "Closing ") << "connection at end of session." << endl;
+			cout << (clientHeader.connection() ? "Keeping " : "Closing ") << "connection at end of session" << endl;
 		}
 
 		if (clientHeader.method() == "GET" || clientHeader.method() == "HEAD"){
@@ -72,21 +72,31 @@ void HTTPResponder::respond() {
 				filename = clientHeader.filename().substr(1, clientHeader.filename().size() - 1);
 
 			if (verbose)
-				cout << "Attempting to access file \"" << filename << " for client" << endl;
+				cout << "Attempting to access file \"" << filename << "\" for client" << endl;
 
 			if (access(filename.c_str(), F_OK | R_OK) == -1){
 				if (errno == EACCES){
+					if (verbose)
+						cout << "Invalid permissions on file" << endl;
 					responseHeader.status(FORBIDDEN);
 					responseHeader.statusStr("Forbidden");
 				}
 				else if (errno == ENOENT){
+					if (verbose)
+						cout << "File doesn't exist" << endl;
 					responseHeader.status(NOT_FOUND);
 					responseHeader.statusStr("Not found");
 				}
 				else {
+					if (verbose)
+						cout << "Something bad happened that I didn't expect" << endl;
 					responseHeader.status(SERVER_ERROR);
 					responseHeader.statusStr("Internal server error");
 				}
+				string rsp = responseHeader.construct();
+				write(connection, rsp.c_str(), rsp.size());
+				close(connection);
+				return;
 			}
 			else {
 				//Open a file, read all of it into memory (no, this isn't a good idea)
@@ -109,6 +119,8 @@ void HTTPResponder::respond() {
 				free(fileBuf);
 
 				write(connection, rsp.c_str(), rsp.size());
+				close(connection);
+				return;
 			}
 		}
 		else {

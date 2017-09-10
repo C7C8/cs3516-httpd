@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
 		sockaddr_in* clientAddr = new sockaddr_in;
 		int connection = accept(netsocket, (sockaddr*)&clientAddr, &socklen);
 		cout << "Got connection from client, waiting to allocate new thread (";
-		cout << threadQueue.size() << "/" << args.threads_arg << " active threads)";
+		cout << threadQueue.size() << "/" << args.threads_arg << " active threads)" << endl;
 
 		//Put the new responder thread at the end of the queue. If there isn't enough room,
 		//wait for the oldest thread to finish execution.

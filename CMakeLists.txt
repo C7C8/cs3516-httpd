@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project(HTTP-Suite CXX)
+project(HTTP-Suite C CXX)
 find_package(Threads REQUIRED)
 
 set(CMAKE_CXX_STANDARD 14)

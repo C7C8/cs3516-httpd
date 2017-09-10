@@ -34,6 +34,7 @@ string HTTPHeader::construct(string data){
 	if (data.size() > 0)
 		headerstr << "Content-Length: " << data.size() << "\r\n";
 	headerstr << "Date: " << datestr << "\r\n";
+	//headerstr << "Connection: " << (keepalive ? "keep-alive" : "close") << "\r\n"
 	headerstr << "\r\n" << data;
 
 	return headerstr.str();
