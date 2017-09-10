@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
 
 		//Put the new responder thread at the end of the queue. If there isn't enough room,
 		//wait for the oldest thread to finish execution.
-		HTTPResponder* responder = new HTTPResponder(connection, clientAddr);
+		HTTPResponder* responder = new HTTPResponder(connection, clientAddr, (bool)args.verbose_given);
 		if (threadQueue.size() >= args.threads_arg){
 			threadQueue.front()->join();
 			delete threadQueue.front();

@@ -80,7 +80,7 @@ class HTTPHeader {
 public:
 	HTTPHeader();
 	HTTPHeader(string header);
-	string construct(string data);
+	string construct(string data = "");
 	void parse(string header);
 
 	/** Functions for various HTTP header fields.**/
@@ -88,6 +88,7 @@ public:
 	void method(string method);
 	string filename();
 	void status(HTTP_STATUS_CODE code);
+	void statusStr(string stat);
 	HTTP_STATUS_CODE status();
 	string host();
 	string accept();
@@ -108,6 +109,7 @@ private:
 	string hMethod;
 	string hFilename;
 	HTTP_STATUS_CODE hStatus;
+	string hStatusStr;
 	string hHost;
 	string hAccept;
 	bool keepalive;

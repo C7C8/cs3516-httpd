@@ -11,6 +11,14 @@ HTTPHeader::HTTPHeader() {
 }
 
 /**
+ * Construct a new header, parsing from given data.
+ * @param header
+ */
+HTTPHeader::HTTPHeader(string header) : HTTPHeader() {
+	parse(header);
+}
+
+/**
  * Using set parameters, construct an HTTP header to which the provided data (if any) is
  * appended to.
  * @return Constructed header as a string.
@@ -20,10 +28,11 @@ string HTTPHeader::construct(string data){
 	char datestr[1000] = {'\0'};
 	strftime(datestr, 1000, "%a, %d %b %Y %H:%M:%S %Z", &hDate);
 
-	headerstr << "HTTP/1.1 " << hStatus << "\r\n";
+	headerstr << "HTTP/1.1 " << hStatus << " " << hStatusStr << "\r\n";
 	headerstr << "Connection: " << (keepalive ? "keep-alive" : "close") << "\r\n";
 	headerstr << "Server: " << hServerName << "\r\n";
-	headerstr << "Content-Length: " << data.size() << "\r\n";
+	if (data.size() > 0)
+		headerstr << "Content-Length: " << data.size() << "\r\n";
 	headerstr << "Date: " << datestr << "\r\n";
 	headerstr << "\r\n" << data;
 
@@ -75,10 +84,6 @@ void HTTPHeader::parse(string header) {
 	}
 }
 
-HTTPHeader::HTTPHeader(string header) {
-	parse(header);
-}
-
 string HTTPHeader::method(){
 	return hMethod;
 }
@@ -95,6 +100,10 @@ string HTTPHeader::filename(){
 void HTTPHeader::status(HTTP_STATUS_CODE code){
 	//No need to check for parsed data, this field is never filled by the client.
 	hStatus = code;
+}
+
+void HTTPHeader::statusStr(string stat){
+	hStatusStr = stat;
 }
 
 HTTP_STATUS_CODE HTTPHeader::status(){
