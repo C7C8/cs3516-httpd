@@ -110,14 +110,11 @@ void HTTPResponder::respond() {
 				//Now construct our response
 				responseHeader.status(OK);
 				responseHeader.statusStr("OK");
-				string rsp;
-				if (clientHeader.method() == "GET")
-					rsp = responseHeader.construct(fileBuf);
-				else
-					rsp = responseHeader.construct();
+				string rsp = responseHeader.construct(size);
+				write(connection, rsp.c_str(), rsp.size());
+				write(connection, fileBuf, size);
 				free(fileBuf);
 
-				write(connection, rsp.c_str(), rsp.size());
 			}
 		}
 		else {

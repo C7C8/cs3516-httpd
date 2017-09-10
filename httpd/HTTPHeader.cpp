@@ -23,7 +23,7 @@ HTTPHeader::HTTPHeader(string header) : HTTPHeader() {
  * appended to.
  * @return Constructed header as a string.
  */
-string HTTPHeader::construct(string data){
+string HTTPHeader::construct(long long dataSize){
 	stringstream headerstr;
 	char datestr[1000] = {'\0'};
 	strftime(datestr, 1000, "%a, %d %b %Y %H:%M:%S %Z", &hDate);
@@ -31,11 +31,11 @@ string HTTPHeader::construct(string data){
 	headerstr << "HTTP/1.1 " << hStatus << " " << hStatusStr << "\r\n";
 	headerstr << "Connection: " << (keepalive ? "keep-alive" : "close") << "\r\n";
 	headerstr << "Server: " << hServerName << "\r\n";
-	if (data.size() > 0)
-		headerstr << "Content-Length: " << data.size() << "\r\n";
+	if (dataSize > 0)
+		headerstr << "Content-Length: " << dataSize << "\r\n";
 	headerstr << "Date: " << datestr << "\r\n";
 	//headerstr << "Connection: " << (keepalive ? "keep-alive" : "close") << "\r\n"
-	headerstr << "\r\n" << data;
+	headerstr << "\r\n";
 
 	return headerstr.str();
 }

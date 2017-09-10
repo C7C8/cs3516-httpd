@@ -80,7 +80,7 @@ class HTTPHeader {
 public:
 	HTTPHeader();
 	HTTPHeader(string header);
-	string construct(string data = "");
+	string construct(long long dataSize = 0);
 	void parse(string header);
 
 	/** Functions for various HTTP header fields.**/
