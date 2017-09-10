@@ -1,5 +1,4 @@
 #include "HTTPHeader.h"
-#include <iostream>
 using namespace std;
 
 HTTPHeader::HTTPHeader() {
@@ -40,12 +39,40 @@ void HTTPHeader::parse(string header) {
 	parsedHeader = true;
 
 	//Method: always the first word of the header.
-	size_t methodEnd = header.find(' ', 0);
-	cout << "First space at " << methodEnd << endl;
+	const size_t methodEnd = header.find(' ', 0);
 	hMethod = header.substr(0, methodEnd);
-	cout << "Extracted method \"" << hMethod << "\"" << endl;
 
-	//We don't care about the HTTP version
+	//Get filename
+	const size_t httpVStart = header.find("HTTP", methodEnd);
+	hFilename = header.substr(methodEnd + 1, httpVStart - 5); //1 for add space, 5 for HTTP-space.
+
+	//Header line parsed. Extract the extra headers. This is done on a line-by-line basis, so for
+	//that we need a loop and a whole lot of ifs. Should be fun!
+	istringstream header_s(header);
+	string line;
+	getline(header_s, line); // strip off first line, we don't care about it
+	while (getline(header_s, line)){
+		if (line == "\r")
+			break;
+		const size_t dataStart = line.find(' ', 0);
+		const string headerLine = line.substr(0, dataStart - 1);
+
+		if (headerLine == "Host")
+			hHost = line.substr(dataStart + 1, line.size() - dataStart - 2);
+		if (headerLine == "Accept")
+			hAccept = line.substr(dataStart + 1, line.size() - dataStart - 2);
+		if (headerLine == "Connection")
+			keepalive = (line.substr(dataStart + 1, line.size() - dataStart - 2) == "keep-alive");
+		if (headerLine == "DNT")
+			hDoNotTrack = (line.substr(dataStart + 1, line.size() - dataStart - 2) == "1");
+		/*if (headerLine == "Date"){
+		 * Hahaha, you thought I was going to implement date parsing? Or even try? There's a
+		 * function for it somewhere, but I don't care to learn it!
+		 * }
+		 */
+		if (headerLine == "User-Agent")
+			hUserAgent = line.substr(dataStart + 1, line.size() - dataStart - 2);
+	}
 }
 
 HTTPHeader::HTTPHeader(string header) {

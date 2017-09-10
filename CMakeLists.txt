@@ -8,7 +8,7 @@ set(HTTPC_SOURCE_FILES
         httpc/httpc.cpp)
 set(HTTPD_SOURCE_FILES
         httpd/httpd.cpp
-        httpd/cmdline.c httpd/HTTPResponderThread.cpp httpd/HTTPResponderThread.h httpd/HTTPHeader.cpp httpd/HTTPHeader.h)
+        httpd/cmdline.c httpd/HTTPResponder.cpp httpd/HTTPResponder.h httpd/HTTPHeader.cpp httpd/HTTPHeader.h)
 
 add_executable(httpc ${HTTPC_SOURCE_FILES})
 add_executable(httpd ${HTTPD_SOURCE_FILES})
