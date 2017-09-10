@@ -54,7 +54,8 @@ void HTTPResponder::respond() {
 	while (true){
 		int rdsize = read(connection, buf, 8192);
 		if (rdsize <= 0){
-			break;
+			close(connection); //we're done here
+			return;
 		}
 
 		HTTPHeader clientHeader(buf), responseHeader;
@@ -95,8 +96,6 @@ void HTTPResponder::respond() {
 				}
 				string rsp = responseHeader.construct();
 				write(connection, rsp.c_str(), rsp.size());
-				close(connection);
-				return;
 			}
 			else {
 				//Open a file, read all of it into memory (no, this isn't a good idea)
@@ -119,8 +118,6 @@ void HTTPResponder::respond() {
 				free(fileBuf);
 
 				write(connection, rsp.c_str(), rsp.size());
-				close(connection);
-				return;
 			}
 		}
 		else {
