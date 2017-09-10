@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
 		//Main server loop. Accept connections as they come up, spin up a new responder thread
 		//to address each of them. That part of the program is currently unimplemented.
 		socklen_t socklen; //?
-		sockaddr_in* clientAddr = new sockaddr_in;
+		sockaddr_in clientAddr;
 		int connection = accept(netsocket, (sockaddr*)&clientAddr, &socklen);
 		cout << "Got connection from client, waiting to allocate new thread (";
 		cout << threadQueue.size() << "/" << args.threads_arg << " active threads)" << endl;
@@ -59,12 +59,18 @@ int main(int argc, char* argv[]){
 		//wait for the oldest thread to finish execution.
 		HTTPResponder* responder = new HTTPResponder(connection, clientAddr, (bool)args.verbose_given);
 		if (threadQueue.size() >= args.threads_arg){
-			threadQueue.front()->join();
+			threadQueue.front()->forcejoin();
 			delete threadQueue.front();
 			threadQueue.pop();
 		}
 		threadQueue.push(responder);
 		responder->run();
+
+		//Check the head of the queue to see if that thread is done or not. If so, kill!
+		if (threadQueue.front()->join()){
+			delete threadQueue.front();
+			threadQueue.pop();
+		}
 	}
 #pragma clang diagnostic pop
 }

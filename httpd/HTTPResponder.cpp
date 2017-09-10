@@ -7,10 +7,11 @@
  * @param connection Connection as returned by a call to accept().
  * @param clientAddr Address of connecting client, as populated by a call to accept()
  */
-HTTPResponder::HTTPResponder(int connection, sockaddr_in *clientAddr, bool verbose) {
+HTTPResponder::HTTPResponder(int connection, sockaddr_in clientAddr, bool verbose) {
 	this->connection = connection;
 	this->clientAddr = clientAddr;
 	this->verbose = verbose;
+	finished = false;
 }
 
 /**
@@ -20,17 +21,15 @@ HTTPResponder::HTTPResponder(int connection, sockaddr_in *clientAddr, bool verbo
  */
 HTTPResponder::~HTTPResponder() {
 	if (t != nullptr) {
-		if (t->joinable())
-			t->join();
+		t->join();
 		delete t;
 	}
-	delete clientAddr;
 	close(connection);
 }
 
 /**
  * Run the thread (specifically by creating a new std::thread that calls into
- * private function respond()
+ * private function respond())
  */
 void HTTPResponder::run(){
 	t = new thread(&HTTPResponder::respond, this);
@@ -38,10 +37,34 @@ void HTTPResponder::run(){
 
 /**
  * Join the thread if possible.
+ * @return True if the thread was joined, false if the thread is still running and was thus
+ * not joined.
  */
-void HTTPResponder::join(){
-	if (t != nullptr)
+bool HTTPResponder::join(){
+	if (t != nullptr && finished){
+		if (verbose)
+			cout << "Ending a finished thread" << endl;
 		t->join();
+		delete t;
+		t = nullptr;
+		return true;
+	}
+	if (verbose)
+		cout << "Thread not ready to be joined yet" << endl;
+	return false;
+}
+
+/**
+ * Immediately join thread. This may result in a delay.
+ */
+void HTTPResponder::forcejoin() {
+	if (verbose)
+		cout << "Force joining a thread" << endl;
+	if (t != nullptr){
+		t->join();
+		delete t;
+		t = nullptr;
+	}
 }
 
 /**
@@ -54,7 +77,8 @@ void HTTPResponder::respond() {
 	while (true){
 		int rdsize = read(connection, buf, 8192);
 		if (rdsize <= 0){
-			close(connection); //we're done here
+			close(connection);
+			finished = true; //I hate this hack
 			return;
 		}
 
@@ -96,6 +120,8 @@ void HTTPResponder::respond() {
 				}
 				string rsp = responseHeader.construct();
 				write(connection, rsp.c_str(), rsp.size());
+				finished = true;
+				close(connection);
 			}
 			else {
 				//Open a file, read all of it into memory (no, this isn't a good idea)
@@ -114,7 +140,6 @@ void HTTPResponder::respond() {
 				write(connection, rsp.c_str(), rsp.size());
 				write(connection, fileBuf, size);
 				free(fileBuf);
-
 			}
 		}
 		else {
@@ -126,11 +151,13 @@ void HTTPResponder::respond() {
 			write(connection, rsp.c_str(), rsp.size());
 			//if you cause me an error, I will end your connection whether you want it ended or not.
 			close(connection);
+			finished = true;
 			return;
 		}
 
 		if (!clientHeader.connection()){
 			close(connection);
+			finished = true;
 			return;
 		}
 	}

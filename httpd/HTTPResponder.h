@@ -12,16 +12,18 @@ using std::endl;
 
 class HTTPResponder {
 public:
-	HTTPResponder(int connection, sockaddr_in* clientAddr, bool verbose = false);
+	HTTPResponder(int connection, sockaddr_in clientAddr, bool verbose = false);
 	~HTTPResponder();
 	void run();
-	void join();
+	bool join();
+	void forcejoin();
 
 private:
 	void respond();
 
 	int connection;
-	sockaddr_in* clientAddr;
+	sockaddr_in clientAddr;
 	thread* t;
 	bool verbose;
+	bool finished; //because thread.joinable() doesn't work like I want it to work.
 };
