@@ -112,6 +112,7 @@ int main(int argc, char* argv[]){
 		//No more worrying over the responder again, the thing will delete itself whenever it's
 		//finished its job. That can't possibly end badly, can it?
 	}
-	free(threads); //never runs, but I feel better having this here
+	free(threads);
+	close(netsocket);
 #pragma clang diagnostic pop
 }
