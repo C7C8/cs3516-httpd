@@ -29,12 +29,10 @@ string HTTPHeader::construct(long long dataSize){
 	strftime(datestr, 1000, "%a, %d %b %Y %H:%M:%S %Z", &hDate);
 
 	headerstr << "HTTP/1.1 " << hStatus << " " << hStatusStr << "\r\n";
-	headerstr << "Connection: " << (keepalive ? "keep-alive" : "close") << "\r\n";
 	headerstr << "Server: " << hServerName << "\r\n";
 	if (dataSize > 0)
 		headerstr << "Content-Length: " << dataSize << "\r\n";
 	headerstr << "Date: " << datestr << "\r\n";
-	//headerstr << "Connection: " << (keepalive ? "keep-alive" : "close") << "\r\n"
 	headerstr << "\r\n";
 
 	return headerstr.str();

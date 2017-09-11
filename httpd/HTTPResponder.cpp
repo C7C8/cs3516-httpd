@@ -76,7 +76,10 @@ void HTTPResponder::respond() {
 	char buf[8192] = {};
 	while (true){
 		int rdsize = read(connection, buf, 8192);
-		if (rdsize <= 0){
+		if (rdsize <= 0) {
+			if (verbose)
+				printf("TERMINATING CONNECTION: %d\n\n", rdsize);
+			
 			close(connection);
 			finished = true; //I hate this hack
 			return;
@@ -84,9 +87,8 @@ void HTTPResponder::respond() {
 
 		HTTPHeader clientHeader(buf), responseHeader;
 		if (verbose){
-			cout << "Got a " << clientHeader.method() << " from a client, something about ";
-			cout << clientHeader.filename() << endl;
-			cout << (clientHeader.connection() ? "Keeping " : "Closing ") << "connection at end of session" << endl;
+			cout << "Client: " << clientHeader.method() << " " << clientHeader.filename() << ", then ";
+			cout << (clientHeader.connection() ? "KEEPALIVE" : "CLOSE") << endl;
 		}
 
 		if (clientHeader.method() == "GET" || clientHeader.method() == "HEAD"){
@@ -97,7 +99,7 @@ void HTTPResponder::respond() {
 				filename = clientHeader.filename().substr(1, clientHeader.filename().size() - 1);
 
 			if (verbose)
-				cout << "Attempting to access file \"" << filename << "\" for client" << endl;
+				cout << "Accessing file " << filename << endl;
 
 			if (access(filename.c_str(), F_OK | R_OK) == -1){
 				if (errno == EACCES){
@@ -114,14 +116,13 @@ void HTTPResponder::respond() {
 				}
 				else {
 					if (verbose)
-						cout << "Something bad happened that I didn't expect" << endl;
+						cout << "Other file-based error" << endl;
 					responseHeader.status(SERVER_ERROR);
 					responseHeader.statusStr("Internal server error");
 				}
 				string rsp = responseHeader.construct();
 				write(connection, rsp.c_str(), rsp.size());
-				finished = true;
-				close(connection);
+				write(connection, "Error", 6);
 			}
 			else {
 				//Open a file, read all of it into memory (no, this isn't a good idea)
@@ -131,6 +132,7 @@ void HTTPResponder::respond() {
 				long long size = ftell(file);
 				rewind(file);
 				char* fileBuf = (char*)malloc(size);
+				//I hope your RAM is as big as this file is
 				fread(fileBuf, sizeof(char), size, file);
 
 				//Now construct our response
@@ -143,19 +145,19 @@ void HTTPResponder::respond() {
 			}
 		}
 		else {
-			//We don't support that kind of method here. Make sure the client is aware of the problem
+			//Method that we can't respond to
+			if (verbose)
+				cout << "CLIENT BAD METHOD" << endl;
 			responseHeader.status(NOT_IMPL);
 			responseHeader.statusStr("Not implemented");
 			responseHeader.connection(false);
 			string rsp = responseHeader.construct();
 			write(connection, rsp.c_str(), rsp.size());
-			//if you cause me an error, I will end your connection whether you want it ended or not.
-			close(connection);
-			finished = true;
-			return;
 		}
 
 		if (!clientHeader.connection()){
+			if (verbose)
+				cout << "TERMINATING CONNECTION: CLOSE" << endl;
 			close(connection);
 			finished = true;
 			return;

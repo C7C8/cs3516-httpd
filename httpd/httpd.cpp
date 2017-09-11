@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 
-	cout << "Starting server with " << args.threads_arg << " threads on INADDR_ANY:" << args.port_arg << endl;
+	cout << "Starting server with " << args.threads_arg << " threads on INADDR_ANY:" << args.port_arg << endl << endl;
 	queue<HTTPResponder*> threadQueue;
 	listen(netsocket, 0);
 
@@ -52,16 +52,38 @@ int main(int argc, char* argv[]){
 		socklen_t socklen; //?
 		sockaddr_in clientAddr;
 		int connection = accept(netsocket, (sockaddr*)&clientAddr, &socklen);
-		cout << "Got connection from client, waiting to allocate new thread (";
-		cout << threadQueue.size() << "/" << args.threads_arg << " active threads)" << endl;
+		if (args.verbose_given) {
+			cout << "ACCEPTED CLIENT CONNECTION (";
+			cout << threadQueue.size() << "/" << args.threads_arg << " active threads)" << endl;
+		}
 
 		//Put the new responder thread at the end of the queue. If there isn't enough room,
 		//wait for the oldest thread to finish execution.
 		HTTPResponder* responder = new HTTPResponder(connection, clientAddr, (bool)args.verbose_given);
 		if (threadQueue.size() >= args.threads_arg){
+			if (args.verbose_given)
+				cout << "Waiting for oldest thread to complete execution" << endl;
 			threadQueue.front()->forcejoin();
 			delete threadQueue.front();
 			threadQueue.pop();
+
+			//...this is getting hacky now, but I'm really not in a condition variable mood right
+			//now. Do some housekeeping to clean up old threads.
+			queue<HTTPResponder*> temp;
+			while (threadQueue.size() > 0){
+				if (threadQueue.front()->join()) {
+					if (args.verbose_given)
+						cout << "Cleaned up thread" << endl;
+					delete threadQueue.front();
+					threadQueue.pop();
+				}
+				else {
+					temp.push(threadQueue.front());
+					threadQueue.pop();
+				}
+			}
+			threadQueue = temp;
+
 		}
 		threadQueue.push(responder);
 		responder->run();
