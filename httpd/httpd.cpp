@@ -79,8 +79,6 @@ int main(int argc, char* argv[]){
 	listen(netsocket, 0);
 	HTTPResponder** threads = (HTTPResponder**)malloc(sizeof(HTTPResponder*)*args.threads_arg);
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
 	while (true){
 		//Main server loop. Accept connections as they come up, spin up new threads as needed.
 
@@ -114,5 +112,4 @@ int main(int argc, char* argv[]){
 	}
 	free(threads);
 	close(netsocket);
-#pragma clang diagnostic pop
 }
