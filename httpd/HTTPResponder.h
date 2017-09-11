@@ -12,18 +12,18 @@ using std::endl;
 
 class HTTPResponder {
 public:
-	HTTPResponder(int connection, sockaddr_in clientAddr, bool verbose = false);
+	HTTPResponder(int connection, sockaddr_in clientAddr, HTTPResponder** threadList, bool verbose = false);
 	~HTTPResponder();
 	void run();
-	bool join();
-	void forcejoin();
+	static int getCount() {return count;}
 
 private:
 	void respond();
 
+	HTTPResponder** threadList;
 	int connection;
 	sockaddr_in clientAddr;
-	thread* t;
+	thread t;
 	bool verbose;
-	bool finished; //because thread.joinable() doesn't work like I want it to work.
+	static int count;
 };

@@ -1,17 +1,22 @@
 #include "HTTPResponder.h"
 #include "HTTPHeader.h"
 
+int HTTPResponder::count = 0;
+
 /**
  * Construct a new HTTP responder thread using a given connection and a client address.
  * This will allow for server multithreading.
  * @param connection Connection as returned by a call to accept().
  * @param clientAddr Address of connecting client, as populated by a call to accept()
+ * @note This implements the exceedingly very bad idea of letting HTTPResponders destroy
+ * themselves and remove pointers referencing them.
  */
-HTTPResponder::HTTPResponder(int connection, sockaddr_in clientAddr, bool verbose) {
+HTTPResponder::HTTPResponder(int connection, sockaddr_in clientAddr, HTTPResponder** threadList, bool verbose) {
 	this->connection = connection;
 	this->clientAddr = clientAddr;
 	this->verbose = verbose;
-	finished = false;
+	this->threadList = threadList;
+	count++;
 }
 
 /**
@@ -20,11 +25,9 @@ HTTPResponder::HTTPResponder(int connection, sockaddr_in clientAddr, bool verbos
  * already.
  */
 HTTPResponder::~HTTPResponder() {
-	if (t != nullptr) {
-		t->join();
-		delete t;
-	}
 	close(connection);
+	*threadList = nullptr;
+	count--;
 }
 
 /**
@@ -32,39 +35,8 @@ HTTPResponder::~HTTPResponder() {
  * private function respond())
  */
 void HTTPResponder::run(){
-	t = new thread(&HTTPResponder::respond, this);
-}
-
-/**
- * Join the thread if possible.
- * @return True if the thread was joined, false if the thread is still running and was thus
- * not joined.
- */
-bool HTTPResponder::join(){
-	if (t != nullptr && finished){
-		if (verbose)
-			cout << "Ending a finished thread" << endl;
-		t->join();
-		delete t;
-		t = nullptr;
-		return true;
-	}
-	if (verbose)
-		cout << "Thread not ready to be joined yet" << endl;
-	return false;
-}
-
-/**
- * Immediately join thread. This may result in a delay.
- */
-void HTTPResponder::forcejoin() {
-	if (verbose)
-		cout << "Force joining a thread" << endl;
-	if (t != nullptr){
-		t->join();
-		delete t;
-		t = nullptr;
-	}
+	t = thread(&HTTPResponder::respond, this);
+	t.detach();
 }
 
 /**
@@ -81,8 +53,7 @@ void HTTPResponder::respond() {
 				printf("TERMINATING CONNECTION: %d\n\n", rdsize);
 			
 			close(connection);
-			finished = true; //I hate this hack
-			return;
+			break;
 		}
 
 		HTTPHeader clientHeader(buf), responseHeader;
@@ -159,8 +130,8 @@ void HTTPResponder::respond() {
 			if (verbose)
 				cout << "TERMINATING CONNECTION: CLOSE" << endl;
 			close(connection);
-			finished = true;
-			return;
+			break;
 		}
 	}
+	delete this; //OH YEAH
 }

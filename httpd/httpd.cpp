@@ -2,7 +2,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <queue>
 #include <cstring>
 #include "cmdline.h"
 #include "HTTPHeader.h"
@@ -10,7 +9,6 @@
 using std::cout;
 using std::cerr;
 using std::endl;
-using std::queue;
 
 int main(int argc, char* argv[]){
 	gengetopt_args_info args;
@@ -41,58 +39,45 @@ int main(int argc, char* argv[]){
 	}
 
 	cout << "Starting server with " << args.threads_arg << " threads on INADDR_ANY:" << args.port_arg << endl << endl;
-	queue<HTTPResponder*> threadQueue;
 	listen(netsocket, 0);
+	HTTPResponder** threads = (HTTPResponder**)malloc(sizeof(HTTPResponder*)*args.threads_arg);
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 	while (true){
-		//Main server loop. Accept connections as they come up, spin up a new responder thread
-		//to address each of them. That part of the program is currently unimplemented.
+		//Main server loop. Accept connections as they come up, spin up new threads as needed.
+
 		socklen_t socklen; //?
 		sockaddr_in clientAddr;
 		int connection = accept(netsocket, (sockaddr*)&clientAddr, &socklen);
 		if (args.verbose_given) {
 			cout << "ACCEPTED CLIENT CONNECTION (";
-			cout << threadQueue.size() << "/" << args.threads_arg << " active threads)" << endl;
+			cout << HTTPResponder::getCount() << "/" << args.threads_arg << " active threads)" << endl;
 		}
 
-		//Put the new responder thread at the end of the queue. If there isn't enough room,
-		//wait for the oldest thread to finish execution.
-		HTTPResponder* responder = new HTTPResponder(connection, clientAddr, (bool)args.verbose_given);
-		if (threadQueue.size() >= args.threads_arg){
-			if (args.verbose_given)
-				cout << "Waiting for oldest thread to complete execution" << endl;
-			threadQueue.front()->forcejoin();
-			delete threadQueue.front();
-			threadQueue.pop();
+		//Find a slot for the thread to go in first, but first make sure one exists.
+		int slot = 0;
+		if (HTTPResponder::getCount() > args.threads_arg && args.verbose_given)
+			cout << "OUT OF THREADS, there may be a delay" << endl;
+		for (int i = 0;; i++){
+			if (i >= args.threads_arg)
+				i = 0;
 
-			//...this is getting hacky now, but I'm really not in a condition variable mood right
-			//now. Do some housekeeping to clean up old threads.
-			queue<HTTPResponder*> temp;
-			while (threadQueue.size() > 0){
-				if (threadQueue.front()->join()) {
-					if (args.verbose_given)
-						cout << "Cleaned up thread" << endl;
-					delete threadQueue.front();
-					threadQueue.pop();
-				}
-				else {
-					temp.push(threadQueue.front());
-					threadQueue.pop();
-				}
+			if (threads[i] == nullptr){
+				slot = i;
+				break;
 			}
-			threadQueue = temp;
-
+			usleep(100000); //Check every 100 ms for a new thread to open up
 		}
-		threadQueue.push(responder);
+		HTTPResponder* responder = new HTTPResponder(connection,
+													 clientAddr,
+													 threads + slot,
+													 (bool)args.verbose_given);
+		threads[slot] = responder;
 		responder->run();
-
-		//Check the head of the queue to see if that thread is done or not. If so, kill!
-		if (threadQueue.front()->join()){
-			delete threadQueue.front();
-			threadQueue.pop();
-		}
+		//No more worrying over the responder again, the thing will delete itself whenever it's
+		//finished its job. That can't possibly end badly, can it?
 	}
+	free(threads); //never runs, but I feel better having this here
 #pragma clang diagnostic pop
 }
