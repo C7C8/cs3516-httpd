@@ -52,12 +52,12 @@ int main(int argc, char* argv[]){
 		int connection = accept(netsocket, (sockaddr*)&clientAddr, &socklen);
 		if (args.verbose_given) {
 			cout << "ACCEPTED CLIENT CONNECTION (";
-			cout << HTTPResponder::getCount() << "/" << args.threads_arg << " active threads)" << endl;
+			cout << HTTPResponder::getCount() << "/" << args.threads_arg << " currently active threads)" << endl;
 		}
 
 		//Find a slot for the thread to go in first, but first make sure one exists.
 		int slot = 0;
-		if (HTTPResponder::getCount() > args.threads_arg && args.verbose_given)
+		if (HTTPResponder::getCount() >= args.threads_arg && args.verbose_given)
 			cout << "OUT OF THREADS, there may be a delay" << endl;
 		for (int i = 0;; i++){
 			if (i >= args.threads_arg)
@@ -69,10 +69,7 @@ int main(int argc, char* argv[]){
 			}
 			usleep(100000); //Check every 100 ms for a new thread to open up
 		}
-		HTTPResponder* responder = new HTTPResponder(connection,
-													 clientAddr,
-													 threads + slot,
-													 (bool)args.verbose_given);
+		HTTPResponder* responder = new HTTPResponder(connection, clientAddr, threads + slot, (bool)args.verbose_given);
 		threads[slot] = responder;
 		responder->run();
 		//No more worrying over the responder again, the thing will delete itself whenever it's
