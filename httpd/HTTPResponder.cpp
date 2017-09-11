@@ -2,6 +2,7 @@
 #include "HTTPHeader.h"
 
 int HTTPResponder::count = 0;
+mutex HTTPResponder::countMutex;
 
 /**
  * Construct a new HTTP responder thread using a given connection and a client address.
@@ -16,7 +17,9 @@ HTTPResponder::HTTPResponder(int connection, sockaddr_in clientAddr, HTTPRespond
 	this->clientAddr = clientAddr;
 	this->verbose = verbose;
 	this->threadList = threadList;
+	countMutex.lock();
 	count++;
+	countMutex.unlock();
 }
 
 /**
@@ -27,7 +30,9 @@ HTTPResponder::HTTPResponder(int connection, sockaddr_in clientAddr, HTTPRespond
 HTTPResponder::~HTTPResponder() {
 	close(connection);
 	*threadList = nullptr;
+	countMutex.lock();
 	count--;
+	countMutex.unlock();
 }
 
 /**

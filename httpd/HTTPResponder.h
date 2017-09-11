@@ -5,10 +5,12 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <mutex>
 using std::thread;
 using std::string;
 using std::cout;
 using std::endl;
+using std::mutex;
 
 class HTTPResponder {
 public:
@@ -25,5 +27,7 @@ private:
 	sockaddr_in clientAddr;
 	thread t;
 	bool verbose;
+
 	static int count;
+	static mutex countMutex;
 };
