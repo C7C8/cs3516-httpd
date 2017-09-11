@@ -9,29 +9,35 @@ option "verbose" v "Verbose output"
     details = "Print out verbose information about incoming connections, requests received, responses sent, and any errors that may occur"
     optional
 
-option "threads" t "Maximum thread count"
+defmode "normal"
+defmode "daemonkiller"
+
+modeoption "threads" t "Maximum thread count"
     details="Set the maximum number of responder threads the server will run. By default \
     it autodetects the maximum number of threads (usually based on your CPU). Keep in mind that \
     the actual number of threads run is T+1, with T responder threads and 1 watchdog/connector \
     thread."
+    mode="normal"
     optional
     int
 
-option "daemon" d "Run server as daemon"
+modeoption "daemon" d "Run server as daemon"
     details="If specified, the server will fork and run in the background. Beware that a file \
     containing the server PID will be saved to /tmp, allowing for the killing of the server \
     later."
+    mode="normal"
     optional
 
-option "kill" k "Kill daemonized server"
-    details="Forces ignore of all other options. Will kill the PID of the currently running \
-    server. If the original server was run as root, you'll probably need to run this as root \
-    too."
+modeoption "kill" k "Kill daemonized server"
+    details="Kills currently running daemonized server"
     optional
+    mode="daemonkiller"
 
-option "port" p "Port to listen on"
+modeoption "port" p "Port to listen on"
     details="Listen on specified port, #1701 by default. Listening on ports lower than 1023 may \
     require special privileges."
+    mode="normal"
     int
     default="1701"
     optional
+

@@ -3,6 +3,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <signal.h>
+#include <sys/stat.h>
 #include "cmdline.h"
 #include "HTTPHeader.h"
 #include "HTTPResponder.h"
@@ -22,12 +24,32 @@ int main(int argc, char* argv[]){
 			exit(1);
 		}
 
-		int piddir = open("/tmp/httpd-server-pid", O_WRONLY | O_CREAT);
+		int pidf = open("/tmp/httpd-server-pid", O_WRONLY | O_CREAT);
+		fchmod(pidf, S_IRUSR | S_IWUSR);
 		string pidstr = std::to_string(getpid());
-		cout << "Writing PID " << pidstr << "to file" << endl;
-		write(piddir, pidstr.c_str(), pidstr.size());
-		close(piddir);
+		cout << "Writing PID " << pidstr << " to file" << endl;
+		write(pidf, pidstr.c_str(), pidstr.size());
+		close(pidf);
 	}
+
+	if (args.kill_given){
+		int pidf = open("/tmp/httpd-server-pid", O_RDONLY);
+		if (pidf < 0){
+			cerr << "Failed to open PID file, is a server running?" << endl;
+			exit(1);
+		}
+		char buf[16] = {'\0'};
+		read(pidf, buf, 16);
+		close(pidf);
+		remove("/tmp/httpd-server-pid");
+		cout << "Killing PID " << buf << endl;
+		if (kill(atoi(buf), SIGTERM) != 0){
+			perror("Failed kill daemon");
+			exit(1);
+		}
+		exit(0);
+	}
+
 
 	//Thread count checker
 	if (!args.threads_given || args.threads_arg < 1){

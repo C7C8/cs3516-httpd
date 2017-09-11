@@ -39,12 +39,15 @@ const char *gengetopt_args_info_detailed_help[] = {
   "  -V, --version        Print version and exit",
   "  -v, --verbose        Verbose output",
   "  Print out verbose information about incoming connections, requests received,\n  responses sent, and any errors that may occur",
+  "\n Mode: normal",
   "  -t, --threads=INT    Maximum thread count",
   "  Set the maximum number of responder threads the server will run. By default\n  it autodetects the maximum number of threads (usually based on your CPU).\n  Keep in mind that     the actual number of threads run is T+1, with T\n  responder threads and 1 watchdog/connector     thread.",
   "  -d, --daemon         Run server as daemon",
   "  If specified, the server will fork and run in the background. Beware that a\n  file     containing the server PID will be saved to /tmp, allowing for the\n  killing of the server     later.",
+  "\n Mode: daemonkiller",
   "  -k, --kill           Kill daemonized server",
-  "  Forces ignore of all other options. Will kill the PID of the currently\n  running     server. If the original server was run as root, you'll probably\n  need to run this as root     too.",
+  "  Kills currently running daemonized server",
+  "\n Mode: normal",
   "  -p, --port=INT       Port to listen on  (default=`1701')",
   "  Listen on specified port, #1701 by default. Listening on ports lower than\n  1023 may     require special privileges.",
     0
@@ -58,14 +61,17 @@ init_help_array(void)
   gengetopt_args_info_help[2] = gengetopt_args_info_detailed_help[2];
   gengetopt_args_info_help[3] = gengetopt_args_info_detailed_help[3];
   gengetopt_args_info_help[4] = gengetopt_args_info_detailed_help[5];
-  gengetopt_args_info_help[5] = gengetopt_args_info_detailed_help[7];
-  gengetopt_args_info_help[6] = gengetopt_args_info_detailed_help[9];
-  gengetopt_args_info_help[7] = gengetopt_args_info_detailed_help[11];
-  gengetopt_args_info_help[8] = 0; 
+  gengetopt_args_info_help[5] = gengetopt_args_info_detailed_help[6];
+  gengetopt_args_info_help[6] = gengetopt_args_info_detailed_help[8];
+  gengetopt_args_info_help[7] = gengetopt_args_info_detailed_help[10];
+  gengetopt_args_info_help[8] = gengetopt_args_info_detailed_help[11];
+  gengetopt_args_info_help[9] = gengetopt_args_info_detailed_help[13];
+  gengetopt_args_info_help[10] = gengetopt_args_info_detailed_help[14];
+  gengetopt_args_info_help[11] = 0; 
   
 }
 
-const char *gengetopt_args_info_help[9];
+const char *gengetopt_args_info_help[12];
 
 typedef enum {ARG_NO
   , ARG_INT
@@ -95,6 +101,8 @@ void clear_given (struct gengetopt_args_info *args_info)
   args_info->daemon_given = 0 ;
   args_info->kill_given = 0 ;
   args_info->port_given = 0 ;
+  args_info->daemonkiller_mode_counter = 0 ;
+  args_info->normal_mode_counter = 0 ;
 }
 
 static
@@ -116,10 +124,10 @@ void init_args_info(struct gengetopt_args_info *args_info)
   args_info->detailed_help_help = gengetopt_args_info_detailed_help[1] ;
   args_info->version_help = gengetopt_args_info_detailed_help[2] ;
   args_info->verbose_help = gengetopt_args_info_detailed_help[3] ;
-  args_info->threads_help = gengetopt_args_info_detailed_help[5] ;
-  args_info->daemon_help = gengetopt_args_info_detailed_help[7] ;
-  args_info->kill_help = gengetopt_args_info_detailed_help[9] ;
-  args_info->port_help = gengetopt_args_info_detailed_help[11] ;
+  args_info->threads_help = gengetopt_args_info_detailed_help[6] ;
+  args_info->daemon_help = gengetopt_args_info_detailed_help[8] ;
+  args_info->kill_help = gengetopt_args_info_detailed_help[11] ;
+  args_info->port_help = gengetopt_args_info_detailed_help[14] ;
   
 }
 
@@ -464,6 +472,29 @@ int update_arg(void *field, char **orig_field,
 }
 
 
+static int check_modes(
+  int given1[], const char *options1[],
+                       int given2[], const char *options2[])
+{
+  int i = 0, j = 0, errors = 0;
+  
+  while (given1[i] >= 0) {
+    if (given1[i]) {
+      while (given2[j] >= 0) {
+        if (given2[j]) {
+          ++errors;
+          fprintf(stderr, "%s: option %s conflicts with option %s\n",
+                  package_name, options1[i], options2[j]);
+        }
+        ++j;
+      }
+    }
+    ++i;
+  }
+  
+  return errors;
+}
+
 int
 cmdline_parser_internal (
   int argc, char **argv, struct gengetopt_args_info *args_info,
@@ -541,6 +572,7 @@ cmdline_parser_internal (
         
           break;
         case 't':	/* Maximum thread count.  */
+          args_info->normal_mode_counter += 1;
         
         
           if (update_arg( (void *)&(args_info->threads_arg), 
@@ -553,6 +585,7 @@ cmdline_parser_internal (
         
           break;
         case 'd':	/* Run server as daemon.  */
+          args_info->normal_mode_counter += 1;
         
         
           if (update_arg( 0 , 
@@ -565,6 +598,7 @@ cmdline_parser_internal (
         
           break;
         case 'k':	/* Kill daemonized server.  */
+          args_info->daemonkiller_mode_counter += 1;
         
         
           if (update_arg( 0 , 
@@ -577,6 +611,7 @@ cmdline_parser_internal (
         
           break;
         case 'p':	/* Port to listen on.  */
+          args_info->normal_mode_counter += 1;
         
         
           if (update_arg( (void *)&(args_info->port_arg), 
@@ -608,6 +643,14 @@ cmdline_parser_internal (
 
 
 
+  if (args_info->daemonkiller_mode_counter && args_info->normal_mode_counter) {
+    int daemonkiller_given[] = {args_info->kill_given,  -1};
+    const char *daemonkiller_desc[] = {"--kill",  0};
+    int normal_given[] = {args_info->threads_given, args_info->daemon_given, args_info->port_given,  -1};
+    const char *normal_desc[] = {"--threads", "--daemon", "--port",  0};
+    error_occurred += check_modes(daemonkiller_given, daemonkiller_desc, normal_given, normal_desc);
+  }
+  
 
   cmdline_parser_release (&local_args_info);
 

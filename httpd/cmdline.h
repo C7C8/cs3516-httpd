@@ -59,6 +59,8 @@ struct gengetopt_args_info
   unsigned int kill_given ;	/**< @brief Whether kill was given.  */
   unsigned int port_given ;	/**< @brief Whether port was given.  */
 
+  int daemonkiller_mode_counter; /**< @brief Counter for mode daemonkiller */
+  int normal_mode_counter; /**< @brief Counter for mode normal */
 } ;
 
 /** @brief The additional parameters to pass to parser functions */
