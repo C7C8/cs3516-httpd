@@ -14,11 +14,26 @@ int main(int argc, char* argv[]){
 	gengetopt_args_info args;
 	cmdline_parser(argc, argv, &args);
 
+	//Daemonize me
+	if (args.daemon_given){
+		cout << "Forking to background, run with -k to kill" << endl;
+		if (daemon(1, 1) != 0){
+			perror("Failed to fork into background");
+			exit(1);
+		}
+
+		int piddir = open("/tmp/httpd-server-pid", O_WRONLY | O_CREAT);
+		string pidstr = std::to_string(getpid());
+		cout << "Writing PID " << pidstr << "to file" << endl;
+		write(piddir, pidstr.c_str(), pidstr.size());
+		close(piddir);
+	}
+
 	//Thread count checker
-	if (!args.threads_given){
+	if (!args.threads_given || args.threads_arg < 1){
 		args.threads_arg = thread::hardware_concurrency();
 		if (args.verbose_given) {
-			cout << "Maximum thread count not supplied, setting to autodetected value " << args.threads_arg << endl;
+			cout << "Valid maximum thread count not supplied, setting to autodetected value " << args.threads_arg << endl;
 		}
 	}
 
