@@ -95,14 +95,15 @@ int main(int argc, char* argv[]){
 		if (HTTPResponder::getCount() >= args.threads_arg && args.verbose_given)
 			cout << "OUT OF THREADS, there may be a delay" << endl;
 		for (int i = 0;; i++){
-			if (i >= args.threads_arg)
+			if (i >= args.threads_arg) {
 				i = 0;
+				usleep(100000);
+			}
 
 			if (threads[i] == nullptr){
 				slot = i;
 				break;
 			}
-			usleep(100000); //Check every 100 ms for a new thread to open up
 		}
 		HTTPResponder* responder = new HTTPResponder(connection, clientAddr, threads + slot, (bool)args.verbose_given);
 		threads[slot] = responder;
