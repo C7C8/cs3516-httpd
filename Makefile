@@ -17,7 +17,7 @@ httpd/HTTPHeader.o: httpd/HTTPHeader.h httpd/HTTPHeader.cpp
 
 httpd/HTTPResponder.o: httpd/HTTPResponder.h httpd/HTTPResponder.cpp
 
-httpd/cmdline.o: httpd/cmdline.h httpd/cmdline.o
+httpd/cmdline.o: httpd/cmdline.h httpd/cmdline.c
 
 httpd/cmdline.h httpd/cmdline.c: httpd/options.ggo
 	gengetopt --output-dir httpd < httpd/options.ggo
