@@ -28,7 +28,7 @@ HTTPResponder::HTTPResponder(int connection, sockaddr_in clientAddr, HTTPRespond
  */
 HTTPResponder::~HTTPResponder() {
 	close(connection);
-	*threadList = nullptr;
+	*threadList = NULL;
 	countMutex.lock();
 	count--;
 	countMutex.unlock();

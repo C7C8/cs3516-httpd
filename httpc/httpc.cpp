@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
 	else if (args.inputs_num == 1){
 		cerr << "No port provided, assuming port 80" << endl;
 	}
-	if (strstr(args.inputs[0], "http://") != nullptr) {
+	if (strstr(args.inputs[0], "http://") != NULL) {
 		args.inputs[0] += strlen("http://");
 		if (args.verbose_given){
 			cout << "Eliminating the http:// from your url... why did you put that there anyways?" << endl;
@@ -47,8 +47,8 @@ int main(int argc, char* argv[]){
 		}
 	}
 	host = strtok(args.inputs[0], "/");
-	path = strtok(nullptr, " "); //stateful library functions give me the creeps
-	if (path == nullptr){
+	path = strtok(NULL, " "); //stateful library functions give me the creeps
+	if (path == NULL){
 		path = (char*)malloc(1);
 		strcpy(path, "\0");
 	}
@@ -128,7 +128,7 @@ int main(int argc, char* argv[]){
 		 */
 	}
 	timeval startTime;
-	gettimeofday(&startTime, nullptr);
+	gettimeofday(&startTime, NULL);
 	dprintf(netsocket, HTTP_GET, path, host);
 
 	char buf[8192] = {'\0'};
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]){
 	//if need be.
 	if (args.print_rtt_given){
 		timeval endTime;
-		gettimeofday(&endTime, nullptr);
+		gettimeofday(&endTime, NULL);
 		int ms = ((endTime.tv_sec - startTime.tv_sec) * 1000) + ((endTime.tv_usec - startTime.tv_usec) / 1000);
 		cerr << "RTT: " << ms << "ms" << endl; //Makes it easier to filter out data
 	}
@@ -150,7 +150,7 @@ int main(int argc, char* argv[]){
 	//Extract the content length from the response, if there is one.
 	int contentLength = 0;
 	char tempBuf[MAX_BUF_SIZE];
-	if (strstr(buf, "Content-Length: ") != nullptr) {
+	if (strstr(buf, "Content-Length: ") != NULL) {
 		char *lengthStr = strncpy(tempBuf, strstr(buf, "Content-Length: "), MAX_BUF_SIZE); //because strtok eats strings...
 		lengthStr += strlen("Content-Length: ");
 		contentLength = atoi(strtok(lengthStr, "\r\n"));
@@ -193,7 +193,7 @@ sockaddr_in resolveHost(char* hostname){
 	//getaddrinfo actually returns a linked list (each addrinfo struct has a pointer to another addrinfo struct),
 	//but we don't actually care about those other results here. Just extract a sockaddr_in struct from the first addr
 	//in the chain, then free the memory occupied by it.
-	sockaddr_in addr = *(sockaddr_in*)result->ai_addr; //No need to check for nullptr, errors are caught above
+	sockaddr_in addr = *(sockaddr_in*)result->ai_addr; //No need to check for NULL, errors are caught above
 	freeaddrinfo(result);
 	return addr;
 }

@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
 
 		int pidf = open("/tmp/httpd-server-pid", O_WRONLY | O_CREAT);
 		fchmod(pidf, S_IRUSR | S_IWUSR);
-		string pidstr = std::to_string(getpid());
+		string pidstr = std::to_string((long long int)getpid()); //cast to long long int because g++ 4.4.7 complains otherwise
 		cout << "Writing PID " << pidstr << " to file" << endl;
 		write(pidf, pidstr.c_str(), pidstr.size());
 		close(pidf);
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]){
 				usleep(100000);
 			}
 
-			if (threads[i] == nullptr){
+			if (threads[i] == NULL){
 				slot = i;
 				break;
 			}
