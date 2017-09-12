@@ -27,8 +27,6 @@ int main(int argc, char* argv[]){
 
 	//gengetopt doesn't generate anything to handle bare arguments like the URL or the port, other than a nice
 	//array containing them. We need a URL first and a number second, so verify that we have them both.
-
-
 	char* host;
 	char* path;
 	uint16_t port = 80;
@@ -39,6 +37,7 @@ int main(int argc, char* argv[]){
 	else if (args.inputs_num == 1){
 		cerr << "No port provided, assuming port 80" << endl;
 	}
+
 	if (strstr(args.inputs[0], "http://") != NULL) {
 		args.inputs[0] += strlen("http://");
 		if (args.verbose_given){
@@ -55,9 +54,8 @@ int main(int argc, char* argv[]){
 	if (args.inputs_num == 2)
 		port = (uint16_t)atoi(args.inputs[1]);
 
-	if (args.verbose_given){
+	if (args.verbose_given)
 		cout << "Getting file /" << path << " from host " << host << ":" << port << endl;
-	}
 
 	int netsocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (netsocket < 0){
@@ -80,52 +78,8 @@ int main(int argc, char* argv[]){
 		cout << "Successfully connected to server\n" << endl;
 		printf("Sending request: \n");
 		printf(HTTP_GET, path, host);
-
-		/*
-    	 * ,-------,  ,  ,   ,-------,
-    	 *  )  ,' /(  |\/|   )\ ',  (
-    	 *   )'  /  \ (qp)  /  \  '(
-    	 *    ) /___ \_\/(_/ ___\ (
-    	 *     '    '-(   )-'    '
-    	 *            )w^w(
-    	 *            (W_W)
-    	 *             ((
-    	 *              ))					 |
-    	 *             ((					/|\
-    	 *              )  HERE BE DRAGONS //|\\
-		 *									 |
-		 *
-		 *
-		 * Those two lines of code above are the most magical printfs I have ever known, and I don't know why. They used to
-		 * be outside the else-if, until I went through this code cleaning up (the program was working flawlessly)
-		 * and realized that they were providing verbose output where there shouldn't be. So, I moved them to their
-		 * present home.
-		 *
-		 * Instant chaos. Segfaults *every single time.* So I moved them back. All is well. What the hell? They're
-		 * printfs! All I did is make them NOT run, why is that causing a segfault? Where is the segfault coming from,
-		 * anyways? It's... oh, wait, it's way down below, in the content length parser. What?!
-		 *
-		 * Ok, so something strange is going on. If I turn verbose output back on, no more segfaults. If I move one of
-		 * the printfs back outside again, no more segfaults either. Or, not always. Now it only segfaults *sometimes*.
-		 * Yay, non-determinism! Maybe this somehow messes with the IO stuff a tiny bit? What if I fflush stdout or even
-		 * the network socket? Nope, no difference. Check Wireshark... nope, server doesn't care either way, and the
-		 * requests going out are identical. Everything is the same network-wise.
-		 *
-		 * So I took a look at the actual segfault location in the code to try and figure it out. It's the weird
-		 * copy-buffer-to-temp line, so strtok doesn't eat my http data when I don't want it to. Maybe the content
-		 * length is getting garbled? ...nope. All is well. Maybe I'm overrunni- HOLY **** THAT'S IT
-		 *
-		 * I had forgotten that strcpy can cause buffer overflows if you don't do it right. I didn't think it would be
-		 * an issue because I was copying between buffers of the same size, but I guess it mattered; once I switched
-		 * over to strncpy, everything stopped segfaulting (and presumably the CNN.com servers breathed a sigh of relief
-		 * when I stopped hammering them with HTTP requests so I could test my non-deterministic bug).
-		 *
-		 * Bug fixed, right? Yup. Problem solved? Nope. I have no idea how that bug ever got revealed. Best I figure is
-		 * that the buffer was overflowing by 1 byte, but how that's related to a pair of printfs *not* executing is beyond
-		 * me. I've been writing C/C++ for about 5 years now, and this is just about the only code that has ever made me say
-		 * "WHAT THE F***?!" out loud. I know those printfs should probably be `cout`'s and not printfs, but
-		 * honestly, I'm too afraid to touch them. It took way too long to find and fix the first time through.
-		 */
+		//These two printfs are magical. I removed them once, and it exposed a mysterious buffer overrun bug. How
+		//that is in any way connected to these printfs is beyond me.
 	}
 	timeval startTime;
 	gettimeofday(&startTime, NULL);
@@ -143,7 +97,7 @@ int main(int argc, char* argv[]){
 	if (args.print_rtt_given){
 		timeval endTime;
 		gettimeofday(&endTime, NULL);
-		int ms = ((endTime.tv_sec - startTime.tv_sec) * 1000) + ((endTime.tv_usec - startTime.tv_usec) / 1000);
+		time_t ms = ((endTime.tv_sec - startTime.tv_sec) * 1000) + ((endTime.tv_usec - startTime.tv_usec) / 1000);
 		cerr << "RTT: " << ms << "ms" << endl; //Makes it easier to filter out data
 	}
 
