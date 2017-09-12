@@ -2,42 +2,43 @@ package "crmyers-http-server"
 version "1.0"
 purpose "Simple multithreaded HTTP server"
 description "Simple multithreaded HTTP server. Will listen on an arbitrary port (1701 by default) \
-            and respond to any requests it receives."
+and respond to any requests it receives."
 versiontext "Created by crmyers for A16-CS3516 at WPI"
+usage "httpd [-tdp] [-k]"
+
+defmode "normal"
+defmode "daemonkiller"
 
 option "verbose" v "Verbose output"
     details = "Print out verbose information about incoming connections, requests received, responses sent, and any errors that may occur"
     optional
 
-defmode "normal"
-defmode "daemonkiller"
-
 modeoption "threads" t "Maximum thread count"
-    details="Set the maximum number of responder threads the server will run. By default \
-    it autodetects the maximum number of threads (usually based on your CPU). Keep in mind that \
-    the actual number of threads run is T+1, with T responder threads and 1 watchdog/connector \
-    thread."
+details="Set the maximum number of responder threads the server will run. By default \
+it autodetects the maximum number of threads (usually based on your CPU). Keep in mind that \
+the actual number of threads run is T+1, with T responder threads and 1 watchdog/connector \
+thread."
     mode="normal"
     optional
     int
 
 modeoption "daemon" d "Run server as daemon"
     details="If specified, the server will fork and run in the background. Beware that a file \
-    containing the server PID will be saved to /tmp, allowing for the killing of the server \
-    later."
+containing the server PID will be saved to /tmp, allowing for the killing of the server \
+later."
     mode="normal"
+    optional
+
+modeoption "port" p "Port to listen on"
+    details="Listen on specified port, #1701 by default. Listening on ports lower than 1023 may \
+require special privileges."
+    mode="normal"
+    int
+    default="1701"
     optional
 
 modeoption "kill" k "Kill daemonized server"
     details="Kills currently running daemonized server"
     optional
     mode="daemonkiller"
-
-modeoption "port" p "Port to listen on"
-    details="Listen on specified port, #1701 by default. Listening on ports lower than 1023 may \
-    require special privileges."
-    mode="normal"
-    int
-    default="1701"
-    optional
 

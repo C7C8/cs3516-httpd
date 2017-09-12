@@ -3,13 +3,13 @@ version "1.0"
 purpose "Simple HTTP client"
 usage "httpc [-vp] URL port"
 description "Simple HTTP client, will connect to an appropriate server, submit its request, and \
-            print whatever the server sends."
+print whatever the server sends."
 versiontext "Created by crmyers for A17-CS3516 at WPI"
 args "--unamed-opts"
 
 option "verbose" v "Verbose output"
 	details="Print out HTTP queries and responses alongside connection info and the data returned \
-	        by the server"
+by the server"
 	optional
 
 option "print-rtt" p "Print RTT"

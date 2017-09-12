@@ -45,10 +45,10 @@ struct gengetopt_args_info
   char * threads_orig;	/**< @brief Maximum thread count original value given at command line.  */
   const char *threads_help; /**< @brief Maximum thread count help description.  */
   const char *daemon_help; /**< @brief Run server as daemon help description.  */
-  const char *kill_help; /**< @brief Kill daemonized server help description.  */
   int port_arg;	/**< @brief Port to listen on (default='1701').  */
   char * port_orig;	/**< @brief Port to listen on original value given at command line.  */
   const char *port_help; /**< @brief Port to listen on help description.  */
+  const char *kill_help; /**< @brief Kill daemonized server help description.  */
   
   unsigned int help_given ;	/**< @brief Whether help was given.  */
   unsigned int detailed_help_given ;	/**< @brief Whether detailed-help was given.  */
@@ -56,8 +56,8 @@ struct gengetopt_args_info
   unsigned int verbose_given ;	/**< @brief Whether verbose was given.  */
   unsigned int threads_given ;	/**< @brief Whether threads was given.  */
   unsigned int daemon_given ;	/**< @brief Whether daemon was given.  */
-  unsigned int kill_given ;	/**< @brief Whether kill was given.  */
   unsigned int port_given ;	/**< @brief Whether port was given.  */
+  unsigned int kill_given ;	/**< @brief Whether kill was given.  */
 
   int daemonkiller_mode_counter; /**< @brief Counter for mode daemonkiller */
   int normal_mode_counter; /**< @brief Counter for mode normal */
