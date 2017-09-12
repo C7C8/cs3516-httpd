@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
 	char* host;
 	char* path;
 	uint16_t port = 80;
-	if (args.inputs_num == 0 | args.inputs_num > 2){
+	if (args.inputs_num == 0 || args.inputs_num > 2){
 		cerr << "Incorrect number of arguments specified, please provide a URL and a port." << endl;
 		exit(1);
 	}
