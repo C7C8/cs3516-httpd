@@ -53,9 +53,9 @@ int main(int argc, char* argv[]){
 
 	//Thread count checker
 	if (!args.threads_given || args.threads_arg < 1){
-		args.threads_arg = thread::hardware_concurrency();
+		args.threads_arg = thread::hardware_concurrency() > 2 ? thread::hardware_concurrency() : 2;
 		if (args.verbose_given) {
-			cout << "Valid maximum thread count not supplied, setting to autodetected value " << args.threads_arg << endl;
+			cout << "Valid maximum thread count not supplied, setting to autodetected/default value " << args.threads_arg << endl;
 		}
 	}
 
