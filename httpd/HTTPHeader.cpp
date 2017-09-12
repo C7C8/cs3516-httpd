@@ -11,10 +11,23 @@ HTTPHeader::HTTPHeader() {
 }
 
 /**
- * Construct a new header, parsing from given data.
- * @param header
+ * Construct a new header, immediately parsing from given data.
+ * @param header Header from client to parse
  */
-HTTPHeader::HTTPHeader(string header) : HTTPHeader() {
+HTTPHeader::HTTPHeader(string header) {
+	/*
+	 * Yes, this constructor is practically a duplicate of the above, and there's a reason for that. Starting in C++
+	 * 11, constructors can now "inherit" other constructors, so those other constructors run before the inheriting
+	 * constructor does. I used to have that here, but it turns out that in g++ 4.4.7 (what rambo.wpi.edu runs),
+	 * -std=c++0x doesn't cover that, and -std=c++11 is unavailable. So, just to make the code compile, the above
+	 * constructor is largely duplicated here.
+	 */
+	parsedHeader = false;
+	hStatus = OK;
+	keepalive = false;
+	hServerName = "crmyers-server-1.1";
+	time_t now = time(0);
+	hDate = *gmtime(&now);
 	parse(header);
 }
 

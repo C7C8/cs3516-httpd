@@ -1,5 +1,4 @@
 #include "HTTPResponder.h"
-#include "HTTPHeader.h"
 
 int HTTPResponder::count = 0;
 mutex HTTPResponder::countMutex;

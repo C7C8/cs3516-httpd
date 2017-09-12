@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <mutex>
+#include "HTTPHeader.h"
 using std::thread;
 using std::string;
 using std::cout;

@@ -1,6 +1,13 @@
 HTTPC + HTTPD
 
-Dump HTTP client + multithreaded HTTP server that is slightly less dumb.
+###IMPORTANT###
+THIS PROGRAM WILL NOT COMPILE ON A VERSION OF G++ LESS THAN 4.8
+IT REQUIRES C++11 SUPPORT, WHICH NEITHER ccc.wpi.edu NOR
+rambo.wpi.edu HAVE. PLEASE CHECK YOUR G++ VERSION (g++ -v)
+BEFORE COMPILATION, OR IT WILL PROBABLY FAIL. Also know that
+any warnings from cmdline.c/h files are not my own fault, those
+files are auto-generated.
+
 
 To compile: `make all`, or `make httpc` and `make httpd` for the
 client and server, respectively. Files named cmdline.h and cmdline.c

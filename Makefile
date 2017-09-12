@@ -1,4 +1,4 @@
-CPPFLAGS=-Wall -Wextra -pthread -std=c++1y
+CPPFLAGS=-Wall -Wextra -pthread -std=c++0x
 
 all: client server
 

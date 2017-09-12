@@ -6,7 +6,6 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include "cmdline.h"
-#include "HTTPHeader.h"
 #include "HTTPResponder.h"
 using std::cout;
 using std::cerr;
@@ -32,6 +31,7 @@ int main(int argc, char* argv[]){
 		close(pidf);
 	}
 
+	//Kill daemon server, if running
 	if (args.kill_given){
 		int pidf = open("/tmp/httpd-server-pid", O_RDONLY);
 		if (pidf < 0){
