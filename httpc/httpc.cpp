@@ -47,7 +47,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 	host = strtok(args.inputs[0], "/");
-	path = strtok(nullptr, "/"); //stateful library functions give me the creeps
+	path = strtok(nullptr, " "); //stateful library functions give me the creeps
 	if (path == nullptr){
 		path = (char*)malloc(1);
 		strcpy(path, "\0");
