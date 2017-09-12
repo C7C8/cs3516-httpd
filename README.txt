@@ -3,8 +3,9 @@ HTTPC + HTTPD
 ###IMPORTANT###
 THIS PROGRAM WILL NOT COMPILE ON A VERSION OF G++ LESS THAN 4.4.7.
 DO *NOT* ATTEMPT TO COMPILE ON ccc.wpi.edu, USE rambo.wpi.edu INSTEAD.
-Also know that any warnings from cmdline.c/h files are not my own
-fault, those files are auto-generated.
+This is because the project requires at *least* preliminary c++11 support,
+which is available in gcc starting around version 4.4, as -std=c++0x.
+The ccc.wpi.edu machine does NOT have this support, as it runs gcc 4.1.2.
 
 ----
 
